@@ -144,9 +144,9 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v3.0.1\n업데이트: 연도별 버튼/최신순 정렬')">CBT v3.0.1</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v3.1.1\n업데이트: 빠른 반영/캐시 우회')">CBT v3.1.1</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
-<script src="data.js"></script>
+<script src="data.js?v=311"></script>
 <script>
 const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
