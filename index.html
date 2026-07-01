@@ -25,6 +25,7 @@ hr{border:0;border-top:1px solid var(--line);margin:13px 0}.warn{background:var(
 .omrWrap.collapsed #omr{display:none}.omrToggle{width:100%;margin-bottom:8px}
 footer{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;gap:6px;padding:8px env(safe-area-inset-right) calc(8px + env(safe-area-inset-bottom)) env(safe-area-inset-left);z-index:30}
 footer button{min-width:58px;padding:10px 8px;font-size:12px}
+.bottomAction{margin-top:12px;margin-bottom:18px}.bottomAction .row{justify-content:space-between}.bottomAction .row button{flex:1;min-width:0}
 
 .versionBadge{position:fixed;right:10px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:60;font-size:11px;font-weight:800;color:var(--muted);background:color-mix(in srgb,var(--card) 82%,transparent);border:1px solid var(--line);border-radius:999px;padding:5px 8px;backdrop-filter:blur(10px);opacity:.82}
 .versionBadge:active{opacity:1}
@@ -93,6 +94,17 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
       <textarea id="note" placeholder="내 해설·암기 포인트"></textarea><br><br><button class="ghost" onclick="saveNote()">메모 저장</button>
     </div>
   </div>
+
+  <div class="card bottomAction">
+    <div class="row">
+      <button class="ghost" onclick="prevQ()">이전</button>
+      <button class="primary" onclick="submitQ()">정답 확인</button>
+      <button class="ghost" onclick="nextQ()">다음</button>
+      <button class="danger" onclick="finish()">채점</button>
+    </div>
+    <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button>
+  </div>
+
   <div class="sheetBackdrop" id="sheetBackdrop" onclick="closeOMR()"></div>
   <div class="omrSheet" id="omrSheet">
     <div class="sheetHandle"></div>
@@ -112,11 +124,11 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v2.2.5\n업데이트: 버튼바 고정 해제')">CBT v2.2.5</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v2.2.6\n업데이트: 하단 버튼바 추가')">CBT v2.2.6</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
 <script src="data.js"></script>
 <script>
-const LS='comhwal-cbt-v2253';let state=JSON.parse(localStorage.getItem(LS)||'{}');
+const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
 let list=[],idx=0,selected=null,checked=false,exam=false,endAt=null,tick=null;
 function $(id){return document.getElementById(id)}function save(){localStorage.setItem(LS,JSON.stringify(state));updateHome()}
