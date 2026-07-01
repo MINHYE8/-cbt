@@ -69,6 +69,9 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 
 .qImage{width:100%;border:1px solid var(--line);border-radius:16px;margin:12px 0;background:white;display:block}
 .imageNotice{font-size:13px;color:var(--muted);margin:8px 0}
+
+.skipBtn{background:#fff7ed!important;color:#9a3412!important;border:1px solid #fed7aa!important;font-weight:900!important}
+.skipPill{display:inline-flex;padding:6px 9px;border-radius:999px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-size:12px;font-weight:900;margin:2px}
 </style></head>
 <body>
 <header><h1>컴활 1급 필기 CBT</h1><div class="sub" id="topSub"></div></header>
@@ -126,6 +129,20 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 
 
 
+
+<section id="skipped" class="hidden">
+  <div class="card">
+    <h2>⚠ 패스 목록</h2>
+    <p class="small">패스한 문제는 일반 풀이에서 자동 제외돼. 필요하면 개별 복구하거나 전체 초기화할 수 있어.</p>
+    <div id="skipList"></div>
+    <br>
+    <div class="grid">
+      <button class="ghost" onclick="showHome()">홈으로</button>
+      <button class="danger" onclick="clearSkipped()">전체 초기화</button>
+    </div>
+  </div>
+</section>
+
 <section id="quiz" class="hidden">
   <div class="card">
     <div class="meta"><span id="progress"></span><span id="timer" class="timer"></span></div>
@@ -135,7 +152,7 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
         <button class="ghost miniBtn" onclick="prevQ()">‹ 이전</button>
         <button class="primary miniBtn" onclick="submitQ()">정답</button>
         <button class="ghost miniBtn" onclick="nextQ()">다음 ›</button>
-        <button class="danger miniBtn" onclick="finish()">채점</button>
+        <button class="danger miniBtn" onclick="finish()">채점</button><button class="skipBtn miniBtn" onclick="passQ()">패스</button>
       </div>
       <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button>
     </div>
@@ -152,7 +169,7 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
       <button class="ghost" onclick="prevQ()">이전</button>
       <button class="primary" onclick="submitQ()">정답 확인</button>
       <button class="ghost" onclick="nextQ()">다음</button>
-      <button class="danger" onclick="finish()">채점</button>
+      <button class="danger" onclick="finish()">채점</button><button class="skipBtn" onclick="passQ()">패스</button>
     </div>
     <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button>
   </div>
@@ -176,15 +193,15 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v3.3.0\n업데이트: 전체 원문 이미지/오류 신고 제거')">CBT v3.3.0</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v3.3.1\n업데이트: 문제 패스 기능')">CBT v3.3.1</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
-<script src="data.js?v=330"></script>
+<script src="data.js?v=331"></script>
 <script>
 const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
-state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
+state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.skip=state.skip||{};state.dark=state.dark||false;
 let list=[],idx=0,selected=null,checked=false,exam=false,endAt=null,tick=null;
 function $(id){return document.getElementById(id)}function save(){localStorage.setItem(LS,JSON.stringify(state));updateHome()}
-function hideAll(){['home','quiz','score','stats','tags'].forEach(x=>$(x).classList.add('hidden'))}
+function hideAll(){['home','quiz','score','stats','tags','skipped'].forEach(x=>$(x).classList.add('hidden'))}
 function applyTheme(){document.documentElement.classList.toggle('dark',!!state.dark)}function toggleDark(){state.dark=!state.dark;applyTheme();save()}
 function updateHome(){setTimeout(()=>{if(typeof updateReportUI==='function')updateReportUI()},0);let done=Object.keys(state.answers).length,total=QUESTIONS.length;$('homeScore').textContent=done+' / '+total;$('homeBar').style.width=(done/total*100)+'%';$('topSub').textContent=`${QUESTIONS.length}문제 · ${new Set(QUESTIONS.map(q=>q.round)).size}회분`}
 function showHome(){clearInterval(tick);hideAll();updateHome();$('home').classList.remove('hidden')}
@@ -198,12 +215,17 @@ function sortLatestFirst(arr){
   });
 }
 
+
+function filterSkipped(arr){
+  return arr.filter(q=>!(state.skip&&state.skip[q.id]));
+}
+
 function start(mode,arg){exam=false;clearInterval(tick);$('timer').textContent='';
  if(mode==='all')list=sortLatestFirst(QUESTIONS); if(mode==='year')list=sortLatestFirst(QUESTIONS.filter(q=>q.year===arg)); if(mode==='recent3')list=sortLatestFirst(QUESTIONS.filter(q=>q.year>=2024)); if(mode==='since2020')list=sortLatestFirst(QUESTIONS.filter(q=>q.year>=2020)); if(mode==='old')list=sortLatestFirst(QUESTIONS.filter(q=>q.year>=2016&&q.year<=2019)); if(mode==='random20')list=shuffle(QUESTIONS).slice(0,20); if(mode==='random40')list=shuffle(QUESTIONS).slice(0,40); if(mode==='random60')list=shuffle(QUESTIONS).slice(0,60);
  if(mode==='subject')list=sortLatestFirst(QUESTIONS.filter(q=>q.subject===arg)); if(mode==='round')list=QUESTIONS.filter(q=>q.round===arg); if(mode==='wrong')list=QUESTIONS.filter(q=>state.wrong[q.id]); if(mode==='fav')list=QUESTIONS.filter(q=>state.fav[q.id]); if(mode==='search')list=QUESTIONS.filter(q=>(q.question+' '+q.choices.join(' ')+' '+(q.tags||[]).join(' ')).toLowerCase().includes(arg.toLowerCase()));
- if(!list.length){alert('해당 문제가 없어.');return}idx=0;hideAll();$('quiz').classList.remove('hidden');render()}
+ list=filterSkipped(list); if(!list.length){alert('해당 문제가 없어. 패스 초기화 후 다시 시도해봐.');return}idx=0;hideAll();$('quiz').classList.remove('hidden');render()}
 function doSearch(){let v=$('searchInput').value.trim();if(!v){alert('검색어 입력');return}start('search',v)}
-function startExam(){exam=true;list=shuffle(QUESTIONS).slice(0,60);idx=0;endAt=Date.now()+60*60*1000;hideAll();$('quiz').classList.remove('hidden');tick=setInterval(updateTimer,1000);updateTimer();render()}
+function startExam(){exam=true;list=shuffle(filterSkipped(QUESTIONS)).slice(0,60);idx=0;endAt=Date.now()+60*60*1000;hideAll();$('quiz').classList.remove('hidden');tick=setInterval(updateTimer,1000);updateTimer();render()}
 function updateTimer(){let ms=Math.max(0,endAt-Date.now()),m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);$('timer').textContent=`${m}:${String(s).padStart(2,'0')}`;if(ms<=0){clearInterval(tick);finish()}}
 function render(){let q=list[idx];selected=state.answers[q.id]||null;checked=!exam&&!!selected;$('progress').textContent=`${idx+1} / ${list.length}`;$('quizBar').style.width=((idx+1)/list.length*100)+'%';$('round').textContent=q.round;$('subject').textContent=q.subject;$('qno').textContent=q.no+'번';$('favBtn').textContent=state.fav[q.id]?'★':'☆';$('qtext').innerHTML='';
  if(q.image){
@@ -238,6 +260,58 @@ if(window.caches){
 }}
 
 
+
+
+function passQ(){
+  let q=list[idx];
+  if(!q)return;
+  if(!confirm(`${q.round} ${q.no}번을 패스할까? 다음부터 일반 풀이에서 제외돼.`))return;
+  state.skip[q.id]=true;
+  delete state.answers[q.id];
+  delete state.wrong[q.id];
+  save();
+  if(list.length<=1){
+    alert('현재 세트의 마지막 문제라 홈으로 이동할게.');
+    showHome();
+    return;
+  }
+  list.splice(idx,1);
+  if(idx>=list.length)idx=list.length-1;
+  render();
+}
+function showSkipped(){
+  hideAll();
+  $('skipped').classList.remove('hidden');
+  renderSkipped();
+  window.scrollTo(0,0);
+}
+function renderSkipped(){
+  let ids=Object.keys(state.skip||{});
+  let box=$('skipList');
+  if(!box)return;
+  if(!ids.length){box.innerHTML='<p class="small">패스한 문제가 없어.</p>';return}
+  let qs=QUESTIONS.filter(q=>state.skip[q.id]).sort((a,b)=>String(b.round).localeCompare(String(a.round),'ko') || a.no-b.no);
+  box.innerHTML=qs.map(q=>`
+    <div class="reportItem">
+      <b>${q.round} · ${q.subject} · ${q.no}번</b>
+      <p class="small">${(q.question||'').replace(/[<>&]/g,'')}</p>
+      <button class="ghost" onclick="unskip('${q.id}')">복구</button>
+    </div>
+  `).join('');
+}
+function unskip(id){
+  delete state.skip[id];
+  save();
+  renderSkipped();
+}
+function clearSkipped(){
+  if(confirm('패스 목록을 전부 초기화할까?')){
+    state.skip={};
+    save();
+    if(!$('skipped').classList.contains('hidden'))renderSkipped();
+    alert('패스 목록 초기화 완료');
+  }
+}
 
 init();
 </script>
