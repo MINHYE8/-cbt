@@ -130,7 +130,7 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
         <button class="ghost miniBtn" onclick="nextQ()">다음 ›</button>
         <button class="danger miniBtn" onclick="finish()">채점</button>
       </div>
-      <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button><button id="reportBtn" class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button>
+      <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button><button data-report-btn="1" class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button>
     </div>
     <div class="row" style="margin-top:10px"><span class="pill" id="round"></span><span class="pill" id="subject"></span><span class="pill" id="qno"></span><span class="spacer"></span><button class="ghost" id="favBtn" onclick="toggleFav()">☆</button></div>
     <hr><div class="question" id="qtext"></div><div id="tagBox"></div><div id="choices"></div><div id="result" class="small"></div>
@@ -147,7 +147,7 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
       <button class="ghost" onclick="nextQ()">다음</button>
       <button class="danger" onclick="finish()">채점</button>
     </div>
-    <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button><button id="reportBtn" class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button>
+    <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button><button data-report-btn="1" class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button>
   </div>
 
   <div class="sheetBackdrop" id="sheetBackdrop" onclick="closeOMR()"></div>
@@ -169,9 +169,9 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v3.0.4\n업데이트: 오류 신고 안정화')">CBT v3.0.4</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v3.0.5\n업데이트: 오류 신고 현재문제 연결 수정')">CBT v3.0.5</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
-<script src="data.js?v=304"></script>
+<script src="data.js?v=305"></script>
 <script>
 const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
@@ -242,7 +242,7 @@ function saveReportStore(arr){
 }
 function getCurrentQuestionForReport(){
   try{
-    if(typeof current!=='undefined' && typeof idx!=='undefined' && current && current[idx]) return current[idx];
+    if(typeof list!=='undefined' && typeof idx!=='undefined' && list && list[idx]) return list[idx];
   }catch(e){}
   return null;
 }
@@ -256,7 +256,7 @@ function isReportSaved(q){
 function updateReportButton(){
   const q=getCurrentQuestionForReport();
   const saved=q && isReportSaved(q);
-  document.querySelectorAll('#reportBtn,[data-report-btn="1"]').forEach(btn=>{
+  document.querySelectorAll('.reportBtn,[data-report-btn="1"]').forEach(btn=>{
     btn.classList.toggle('done',!!saved);
     btn.textContent=saved?'✅ 신고됨':'🚩 오류 신고';
   });
