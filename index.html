@@ -124,7 +124,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v2.2.6\n업데이트: 하단 버튼바 추가')">CBT v2.2.6</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v2.2.7\n업데이트: Safari 캐시 제거')">CBT v2.2.7</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
 <script src="data.js"></script>
 <script>
@@ -164,7 +164,12 @@ let touchStartX=0,touchStartY=0;
 document.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].screenX;touchStartY=e.changedTouches[0].screenY},{passive:true});
 document.addEventListener('touchend',e=>{if($('quiz').classList.contains('hidden'))return;let dx=e.changedTouches[0].screenX-touchStartX,dy=e.changedTouches[0].screenY-touchStartY;if(Math.abs(dx)>70&&Math.abs(dy)<60){if(dx<0)nextQ();else prevQ();}},{passive:true});
 
-function init(){applyTheme();let rounds=[...new Set(QUESTIONS.map(q=>q.round))].sort();$('roundSelect').innerHTML=rounds.map(r=>`<option>${r}</option>`).join('');updateHome();showHome();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{})}
+function init(){applyTheme();let rounds=[...new Set(QUESTIONS.map(q=>q.round))].sort();$('roundSelect').innerHTML=rounds.map(r=>`<option>${r}</option>`).join('');updateHome();showHome();if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));
+}
+if(window.caches){
+  caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)));
+}}
 init();
 </script>
 </body></html>
