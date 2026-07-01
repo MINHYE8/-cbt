@@ -55,8 +55,22 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
 .reportItem .small{margin:0}
 textarea.reportMemo{width:100%;min-height:74px;border:1px solid var(--line);border-radius:14px;padding:10px;font:inherit;background:var(--card);color:var(--text);box-sizing:border-box;margin-top:8px}
 
+
+.toast{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);z-index:9999;background:#111827;color:white;border-radius:999px;padding:12px 16px;font-weight:900;box-shadow:0 12px 30px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1;bottom:132px}
+.reportBtn{border:1px solid #ffd0d0!important;background:#fff1f1!important;color:#a12828!important;font-weight:900!important}
+.reportBtn.done{background:#eef7ee!important;color:#21723a!important;border-color:#bfe8c6!important}
+.reportBadge{display:inline-flex;align-items:center;gap:4px;background:#fff1f1;color:#a12828;border:1px solid #ffd0d0;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;margin-left:6px}
+.reportList{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.reportItem{border:1px solid var(--line);border-radius:16px;padding:12px;background:var(--card)}
+.reportItem b{display:block;margin-bottom:4px}
+.reportItem .small{margin:0 0 6px}
+textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);border-radius:14px;padding:10px;font:inherit;background:var(--card);color:var(--text);box-sizing:border-box;margin-top:8px}
+.skipToggle{display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:800}
+
 </style></head>
 <body>
+<div id="toast" class="toast"></div>
 <header><h1>컴활 1급 필기 CBT</h1><div class="sub" id="topSub"></div></header>
 <main>
 <section id="home">
@@ -112,7 +126,7 @@ textarea.reportMemo{width:100%;min-height:74px;border:1px solid var(--line);bord
       <button onclick="copyReports()">오류 목록 복사</button>
       <button class="danger" onclick="clearReports()">전체 삭제</button>
     </div>
-    <div id="reportList" class="reportList"></div>
+    <label class="skipToggle"><input type="checkbox" id="skipReportedToggle" onchange="toggleSkipReported(this.checked)"> 신고한 문제 건너뛰기</label><div id="reportList" class="reportList"></div>
   </div>
 </section>
 
@@ -127,7 +141,7 @@ textarea.reportMemo{width:100%;min-height:74px;border:1px solid var(--line);bord
         <button class="ghost miniBtn" onclick="nextQ()">다음 ›</button>
         <button class="danger miniBtn" onclick="finish()">채점</button>
       </div>
-      <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button><button class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button>
+      <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button><button class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button><button id="reportBtnTop" class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button>
     </div>
     <div class="row" style="margin-top:10px"><span class="pill" id="round"></span><span class="pill" id="subject"></span><span class="pill" id="qno"></span><span class="spacer"></span><button class="ghost" id="favBtn" onclick="toggleFav()">☆</button></div>
     <hr><div class="question" id="qtext"></div><div id="tagBox"></div><div id="choices"></div><div id="result" class="small"></div>
@@ -144,7 +158,7 @@ textarea.reportMemo{width:100%;min-height:74px;border:1px solid var(--line);bord
       <button class="ghost" onclick="nextQ()">다음</button>
       <button class="danger" onclick="finish()">채점</button>
     </div>
-    <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button><button class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button>
+    <button class="ghost omrButton" onclick="openOMR()">📋 OMR 열기</button><button class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button><button id="reportBtnTop" class="reportBtn omrButton" onclick="reportCurrent()">🚩 오류 신고</button>
   </div>
 
   <div class="sheetBackdrop" id="sheetBackdrop" onclick="closeOMR()"></div>
@@ -166,9 +180,171 @@ textarea.reportMemo{width:100%;min-height:74px;border:1px solid var(--line);bord
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v3.0.2\n업데이트: 오류 신고/모음')">CBT v3.0.2</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v3.0.3\n업데이트: 오류 신고 UX 패치')">CBT v3.0.3</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
-<script src="data.js?v=302"></script>
+<script src="data.js?v=303">
+// ===== report UX patch v3.0.3 =====
+function toast(msg){
+  const el=document.getElementById('toast');
+  if(!el){ alert(msg); return; }
+  el.textContent=msg;
+  el.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer=setTimeout(()=>el.classList.remove('show'),1800);
+}
+function getReports(){
+  try{return JSON.parse(localStorage.getItem('cbtReports')||'[]')}catch(e){return []}
+}
+function saveReports(arr){ localStorage.setItem('cbtReports',JSON.stringify(arr)); }
+function reportKey(q){ return q ? (q.id || `${q.round}-${q.no}`) : ''; }
+function isReported(q){
+  const key=reportKey(q);
+  return !!getReports().find(x=>x.key===key);
+}
+function currentQuestion(){
+  if(typeof current!=='undefined' && typeof idx!=='undefined' && current && current[idx]) return current[idx];
+  return null;
+}
+function updateReportButtons(){
+  const q=currentQuestion();
+  const done=q && isReported(q);
+  document.querySelectorAll('[onclick="reportCurrent()"]').forEach(btn=>{
+    btn.classList.toggle('done',!!done);
+    btn.textContent=done?'✅ 신고됨':'🚩 오류 신고';
+  });
+}
+function reportCurrent(){
+  const q=currentQuestion();
+  if(!q){ toast('신고할 문제가 없어'); return; }
+  const key=reportKey(q);
+  let arr=getReports();
+  const existing=arr.find(x=>x.key===key);
+  if(existing){
+    if(confirm('이미 신고된 문제야. 신고를 취소할까?')){
+      arr=arr.filter(x=>x.key!==key);
+      saveReports(arr);
+      toast('신고 취소됨');
+      updateReportButtons();
+    }
+    return;
+  }
+  const item={
+    key,
+    id:q.id,
+    round:q.round,
+    subject:q.subject,
+    no:q.no,
+    question:(q.question||'').slice(0,140),
+    memo:'문제/선지 깨짐',
+    type:'문제/선지 깨짐',
+    time:new Date().toLocaleString()
+  };
+  arr.push(item);
+  saveReports(arr);
+  toast(`오류 목록에 추가됨: ${q.round} ${q.no}번`);
+  updateReportButtons();
+}
+function showReports(){
+  document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+  const sec=document.getElementById('reports');
+  if(sec) sec.classList.remove('hidden');
+  const v=localStorage.getItem('skipReported')==='1';
+  const a=document.getElementById('skipReportedToggle'); if(a)a.checked=v;
+  const b=document.getElementById('homeSkipReportedToggle'); if(b)b.checked=v;
+  renderReports();
+  window.scrollTo(0,0);
+}
+function renderReports(){
+  const box=document.getElementById('reportList');
+  if(!box)return;
+  const arr=getReports();
+  if(!arr.length){box.innerHTML='<p class="small">아직 신고한 문제가 없어.</p>';return}
+  box.innerHTML=arr.map((x,i)=>`
+    <div class="reportItem">
+      <b>${i+1}. ${x.round} · ${x.subject} · ${x.no}번</b>
+      <p class="small">${escapeHtml(x.question||'')}</p>
+      <textarea class="reportMemo" onchange="updateReportMemo('${x.key}',this.value)">${escapeHtml(x.memo||'문제/선지 깨짐')}</textarea>
+      <p class="small">${x.time||''}</p>
+      <button class="ghost" onclick="goReport('${x.key}')">문제로 이동</button>
+      <button class="ghost" onclick="removeReport('${x.key}')">삭제</button>
+    </div>
+  `).join('');
+}
+function updateReportMemo(key,val){
+  const arr=getReports();
+  const x=arr.find(v=>v.key===key);
+  if(x){x.memo=val;saveReports(arr);toast('메모 저장됨')}
+}
+function removeReport(key){
+  saveReports(getReports().filter(x=>x.key!==key));
+  renderReports();
+  updateReportButtons();
+}
+function clearReports(){
+  if(confirm('오류 모음을 전부 삭제할까?')){
+    localStorage.removeItem('cbtReports');
+    renderReports();
+    updateReportButtons();
+    toast('오류 모음 삭제됨');
+  }
+}
+function reportsText(){
+  const arr=getReports();
+  if(!arr.length)return '오류 신고 없음';
+  return arr.map((x,i)=>`${i+1}. ${x.round} / ${x.subject} / ${x.no}번 - ${x.memo||''}`).join('\n');
+}
+function copyReports(){
+  const t=reportsText();
+  navigator.clipboard?.writeText(t).then(()=>toast('오류 목록 복사됨')).catch(()=>prompt('복사해서 보내줘',t));
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function toggleSkipReported(v){
+  localStorage.setItem('skipReported',v?'1':'0');
+  document.querySelectorAll('#skipReportedToggle,#homeSkipReportedToggle').forEach(x=>x.checked=v);
+  toast(v?'신고 문제 건너뛰기 ON':'신고 문제 건너뛰기 OFF');
+}
+function shouldSkipReported(){
+  return localStorage.getItem('skipReported')==='1';
+}
+function skipReportedForward(){
+  if(!shouldSkipReported() || typeof current==='undefined' || !current || !current.length)return;
+  let guard=0;
+  while(current[idx] && isReported(current[idx]) && guard<current.length){
+    idx=(idx+1)%current.length;
+    guard++;
+  }
+}
+function goReport(key){
+  const arr=getReports();
+  const r=arr.find(x=>x.key===key);
+  if(!r || typeof QUESTIONS==='undefined')return;
+  const pos=QUESTIONS.findIndex(q=>(q.id||`${q.round}-${q.no}`)===key);
+  if(pos<0){toast('문제를 찾지 못했어');return}
+  current=[QUESTIONS[pos]];
+  idx=0;
+  document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('quiz')?.classList.remove('hidden');
+  if(typeof renderQ==='function')renderQ();
+}
+// renderQ 후 버튼 상태 자동 갱신
+if(typeof renderQ==='function' && !window.__reportRenderPatched){
+  const __oldRenderQ=renderQ;
+  renderQ=function(){
+    if(typeof skipReportedForward==='function')skipReportedForward();
+    __oldRenderQ();
+    setTimeout(updateReportButtons,0);
+  };
+  window.__reportRenderPatched=true;
+}
+setTimeout(()=>{
+  const v=localStorage.getItem('skipReported')==='1';
+  document.querySelectorAll('#skipReportedToggle,#homeSkipReportedToggle').forEach(x=>x.checked=v);
+  updateReportButtons();
+},300);
+
+</script>
 <script>
 const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
