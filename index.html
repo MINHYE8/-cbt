@@ -39,7 +39,7 @@ footer button{min-width:58px;padding:10px 8px;font-size:12px}
 .sheetHead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .sheetHead b{font-size:16px}.sheetBody{overflow:auto;padding-bottom:4px}
 .sheetStats{font-size:13px;color:var(--muted)}
-.stickyMini{position:fixed;left:14px;right:14px;top:118px;z-index:40;background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;padding:8px;box-shadow:var(--shadow);max-width:852px;margin:0 auto}
+.stickyMini{position:static;z-index:auto;background:color-mix(in srgb,var(--card) 94%,transparent);border:1px solid var(--line);border-radius:18px;padding:8px;margin:10px 0 12px;box-shadow:var(--shadow)}
 .stickyMini .row{justify-content:space-between}.miniBtn{padding:9px 8px;font-size:13px}
 .tag{font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--card) 70%,var(--line));padding:5px 8px;border-radius:999px;display:inline-block;margin:2px}
 .omr{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}.bubble{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;background:color-mix(in srgb,var(--card) 60%,var(--line));color:var(--muted)}.bubble.done{background:var(--blue);color:white}.bubble.wrong{background:var(--red);color:white}.bubble.current{outline:3px solid var(--green)}
@@ -73,7 +73,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
   <div class="card warn">그림·표가 있는 일부 문제는 PDF 자동 추출 때문에 원본 배치와 다를 수 있어. 문제번호와 회차는 유지되어 있으니 헷갈리면 원본 PDF와 같이 보면 돼.</div>
 </section>
 
-<section id="quiz" class="hidden" style="padding-top:118px">
+<section id="quiz" class="hidden">
   <div class="card">
     <div class="meta"><span id="progress"></span><span id="timer" class="timer"></span></div>
     <div class="progressbar"><div id="quizBar"></div></div>
@@ -112,11 +112,11 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v2.2.4\n업데이트: 상단 버튼바 고정')">CBT v2.2.4</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v2.2.5\n업데이트: 버튼바 고정 해제')">CBT v2.2.5</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
 <script src="data.js"></script>
 <script>
-const LS='comhwal-cbt-v2243';let state=JSON.parse(localStorage.getItem(LS)||'{}');
+const LS='comhwal-cbt-v2253';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
 let list=[],idx=0,selected=null,checked=false,exam=false,endAt=null,tick=null;
 function $(id){return document.getElementById(id)}function save(){localStorage.setItem(LS,JSON.stringify(state));updateHome()}
