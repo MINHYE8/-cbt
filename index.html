@@ -61,6 +61,11 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 .reportTypeSelect{width:100%;margin-top:8px}
 .reportCountMini{font-size:12px;color:var(--muted);margin-top:6px}
 
+
+.reportSummary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.reportSummary .box{border:1px solid var(--line);border-radius:14px;padding:10px;background:color-mix(in srgb,var(--card) 80%,var(--line))}
+.reportSummary b{font-size:18px}
+.reportListCompact{font-size:13px;color:var(--muted);line-height:1.5;margin-top:8px;white-space:pre-wrap}
 </style></head>
 <body>
 <div id="toast" class="toast"></div>
@@ -124,19 +129,24 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 
 
 
+
 <section id="reports" class="hidden">
   <div class="card">
     <h2>🚩 오류 모음</h2>
-    <p class="small">공부 중 깨진 문제를 모아두는 곳. 아래 목록을 복사해서 보내면 그 문제만 골라서 수정할 수 있어.</p>
+    <p class="small">신고한 문제를 회차별로 모아서 보고, 그대로 복사해서 보낼 수 있어.</p>
     <div class="stat" id="reportCountPage">0개</div>
-    <div class="small">현재 신고된 문제</div><br>
+    <div class="small">현재 신고된 문제</div>
+    <div id="reportSummary" class="reportSummary"></div><br>
     <div class="grid">
-      <button onclick="copyReports()">📋 오류 목록 복사</button>
+      <button onclick="copyReports()">📋 자세히 복사</button>
+      <button onclick="copyReportsSimple()">번호만 복사</button>
       <button class="danger" onclick="clearReports()">전체 삭제</button>
+      <button class="ghost" onclick="showHome()">홈으로</button>
     </div>
     <div id="reportList" class="reportList"></div>
   </div>
 </section>
+
 
 
 <section id="quiz" class="hidden">
@@ -189,9 +199,9 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v3.1.0\n업데이트: 오류 신고 센터')">CBT v3.1.0</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v3.2.0\n업데이트: 오류 신고 강화')">CBT v3.2.0</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
-<script src="data.js?v=310"></script>
+<script src="data.js?v=320"></script>
 <script>
 const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
@@ -246,7 +256,8 @@ if(window.caches){
 }}
 
 
-// ===== v3.1.0 report center =====
+
+// ===== v3.2.0 report center plus =====
 function toast(msg){
   const el=document.getElementById('toast');
   if(!el){ alert(msg); return; }
@@ -275,13 +286,31 @@ function isReportSaved(q){
   const key=reportKey(q);
   return !!reportStore().find(x=>x.key===key);
 }
-function updateReportUI(){
+function reportStats(){
   const arr=reportStore();
+  const byRound={};
+  const bySubject={};
+  arr.forEach(x=>{
+    byRound[x.round]=(byRound[x.round]||0)+1;
+    bySubject[x.subject]=(bySubject[x.subject]||0)+1;
+  });
+  return {arr,byRound,bySubject};
+}
+function updateReportUI(){
+  const {arr,byRound}=reportStats();
   const countText=arr.length+'개';
   const home=document.getElementById('reportCountHome');
   const page=document.getElementById('reportCountPage');
   if(home)home.textContent=countText;
   if(page)page.textContent=countText;
+
+  const summary=document.getElementById('reportSummary');
+  if(summary){
+    const top=Object.entries(byRound).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    summary.innerHTML=top.length
+      ? top.map(([r,n])=>`<div class="box"><span class="small">${escapeHtml(r)}</span><br><b>${n}개</b></div>`).join('')
+      : '<p class="small">신고 내역 없음</p>';
+  }
 
   const q=getCurrentQuestionForReport();
   const saved=q && isReportSaved(q);
@@ -305,10 +334,7 @@ function reportCurrent(){
     return;
   }
 
-  const type=prompt(
-    '오류 종류를 입력해줘.\n예: 문제 깨짐 / 보기 깨짐 / 정답 오류 / 오타 / 기타',
-    '문제/선지 깨짐'
-  );
+  const type=prompt('오류 종류를 입력해줘.\n예: 문제 깨짐 / 보기 깨짐 / 정답 오류 / 오타 / 기타','문제/선지 깨짐');
   if(type===null)return;
 
   arr.push({
@@ -317,7 +343,9 @@ function reportCurrent(){
     round:q.round,
     subject:q.subject,
     no:q.no,
-    question:(q.question||'').slice(0,180),
+    question:(q.question||'').replace(/\s+/g,' ').slice(0,220),
+    choices:(q.choices||[]).map(c=>String(c||'').replace(/\s+/g,' ').slice(0,80)),
+    answer:q.answer,
     type:type||'문제/선지 깨짐',
     memo:type||'문제/선지 깨짐',
     time:new Date().toLocaleString()
@@ -335,7 +363,7 @@ function renderReports(){
   updateReportUI();
   const box=document.getElementById('reportList');
   if(!box)return;
-  const arr=reportStore();
+  const arr=reportStore().sort((a,b)=>String(a.round).localeCompare(String(b.round),'ko') || (a.no-b.no));
   if(!arr.length){
     box.innerHTML='<p class="small">아직 신고한 문제가 없어.</p>';
     return;
@@ -344,11 +372,12 @@ function renderReports(){
     <div class="reportItem">
       <b>${i+1}. ${escapeHtml(x.round)} · ${escapeHtml(x.subject)} · ${x.no}번</b>
       <p class="small">${escapeHtml(x.question||'')}</p>
+      <div class="reportListCompact">${escapeHtml((x.choices||[]).map((c,j)=>`${j+1}. ${c}`).join('\n'))}</div>
       <select class="reportTypeSelect" onchange="updateReportType('${x.key}',this.value)">
         ${['문제/선지 깨짐','문제 깨짐','보기 깨짐','정답 오류','오타','기타'].map(v=>`<option ${((x.type||x.memo)===v)?'selected':''}>${v}</option>`).join('')}
       </select>
       <textarea class="reportMemo" onchange="updateReportMemo('${x.key}',this.value)">${escapeHtml(x.memo||x.type||'문제/선지 깨짐')}</textarea>
-      <p class="small">${escapeHtml(x.time||'')}</p>
+      <p class="small">정답: ${x.answer||'?'}번 · ${escapeHtml(x.time||'')}</p>
       <button class="ghost" onclick="removeReport('${x.key}')">삭제</button>
     </div>
   `).join('');
@@ -377,17 +406,37 @@ function clearReports(){
   }
 }
 function reportsText(){
-  const arr=reportStore();
+  const arr=reportStore().sort((a,b)=>String(a.round).localeCompare(String(b.round),'ko') || (a.no-b.no));
   if(!arr.length)return '오류 신고 없음';
-  return arr.map((x,i)=>`${i+1}. ${x.round} / ${x.subject} / ${x.no}번 / ${x.type||x.memo||'문제/선지 깨짐'}`).join('\n');
+  return arr.map((x,i)=>
+`${i+1}. ${x.round} / ${x.subject} / ${x.no}번 / ${x.type||x.memo||'문제/선지 깨짐'}
+문제: ${(x.question||'').replace(/\n/g,' ')}
+보기: ${(x.choices||[]).map((c,j)=>`${j+1}) ${c}`).join(' / ')}
+정답: ${x.answer||'?'}
+메모: ${x.memo||''}`
+  ).join('\n\n');
+}
+function reportsSimpleText(){
+  const arr=reportStore().sort((a,b)=>String(a.round).localeCompare(String(b.round),'ko') || (a.no-b.no));
+  if(!arr.length)return '오류 신고 없음';
+  const grouped={};
+  arr.forEach(x=>{
+    grouped[x.round]=grouped[x.round]||[];
+    grouped[x.round].push(x.no);
+  });
+  return Object.entries(grouped).map(([r,nums])=>`${r}: ${nums.sort((a,b)=>a-b).join(', ')}`).join('\n');
 }
 function copyReports(){
   const text=reportsText();
   if(navigator.clipboard){
-    navigator.clipboard.writeText(text).then(()=>toast('오류 목록 복사됨')).catch(()=>prompt('복사해서 보내줘',text));
-  }else{
-    prompt('복사해서 보내줘',text);
-  }
+    navigator.clipboard.writeText(text).then(()=>toast('자세한 오류 목록 복사됨')).catch(()=>prompt('복사해서 보내줘',text));
+  }else prompt('복사해서 보내줘',text);
+}
+function copyReportsSimple(){
+  const text=reportsSimpleText();
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>toast('번호 목록 복사됨')).catch(()=>prompt('복사해서 보내줘',text));
+  }else prompt('복사해서 보내줘',text);
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
