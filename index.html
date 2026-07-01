@@ -66,6 +66,9 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 .reportSummary .box{border:1px solid var(--line);border-radius:14px;padding:10px;background:color-mix(in srgb,var(--card) 80%,var(--line))}
 .reportSummary b{font-size:18px}
 .reportListCompact{font-size:13px;color:var(--muted);line-height:1.5;margin-top:8px;white-space:pre-wrap}
+
+.qImage{width:100%;border:1px solid var(--line);border-radius:16px;margin:12px 0;background:white;display:block}
+.imageNotice{font-size:13px;color:var(--muted);margin:8px 0}
 </style></head>
 <body>
 <div id="toast" class="toast"></div>
@@ -112,6 +115,12 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
   </div></div>
   <div class="card"><b>회차별</b><br><br><select id="roundSelect"></select><br><br><button class="primary" onclick="start('round',$('roundSelect').value)">선택 회차 풀기</button></div>
   <div class="card"><b>검색 / 키워드별</b><p class="small">예: INDEX, 부분합, 공유 통합 문서, RAID, SQL</p><input id="searchInput" placeholder="검색어 입력"><br><br><div class="grid"><button onclick="doSearch()">검색 문제 풀기</button><button onclick="showTags()">자주 나오는 키워드</button></div></div>
+  
+  <div class="card warn">
+    <b>2026 상시01 표시 방식 변경</b><br>
+    2026년 문제는 텍스트 추출이 전체적으로 깨져서, 원문 이미지를 보고 ①~④를 선택하는 방식으로 수정했어.
+  </div>
+
   <div class="card warn">그림·표가 있는 일부 문제는 PDF 자동 추출 때문에 원본 배치와 다를 수 있어. 문제번호와 회차는 유지되어 있으니 헷갈리면 원본 PDF와 같이 보면 돼.</div>
 
   <div class="card" id="reportHomeCard">
@@ -199,9 +208,9 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v3.2.0\n업데이트: 오류 신고 강화')">CBT v3.2.0</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v3.2.2\n업데이트: 2026 이미지 내장 수정')">CBT v3.2.2</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
-<script src="data.js?v=320"></script>
+<script src="data.js?v=322"></script>
 <script>
 const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
@@ -228,7 +237,12 @@ function start(mode,arg){exam=false;clearInterval(tick);$('timer').textContent='
 function doSearch(){let v=$('searchInput').value.trim();if(!v){alert('검색어 입력');return}start('search',v)}
 function startExam(){exam=true;list=shuffle(QUESTIONS).slice(0,60);idx=0;endAt=Date.now()+60*60*1000;hideAll();$('quiz').classList.remove('hidden');tick=setInterval(updateTimer,1000);updateTimer();render()}
 function updateTimer(){let ms=Math.max(0,endAt-Date.now()),m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);$('timer').textContent=`${m}:${String(s).padStart(2,'0')}`;if(ms<=0){clearInterval(tick);finish()}}
-function render(){let q=list[idx];selected=state.answers[q.id]||null;checked=!exam&&!!selected;$('progress').textContent=`${idx+1} / ${list.length}`;$('quizBar').style.width=((idx+1)/list.length*100)+'%';$('round').textContent=q.round;$('subject').textContent=q.subject;$('qno').textContent=q.no+'번';$('favBtn').textContent=state.fav[q.id]?'★':'☆';$('qtext').textContent=q.question||'(지문 추출 확인 필요)';
+function render(){let q=list[idx];selected=state.answers[q.id]||null;checked=!exam&&!!selected;$('progress').textContent=`${idx+1} / ${list.length}`;$('quizBar').style.width=((idx+1)/list.length*100)+'%';$('round').textContent=q.round;$('subject').textContent=q.subject;$('qno').textContent=q.no+'번';$('favBtn').textContent=state.fav[q.id]?'★':'☆';$('qtext').innerHTML='';
+ if(q.image){
+   $('qtext').innerHTML=`<div class="imageNotice">원문 이미지 기준 문제입니다.</div><img class="qImage" src="${q.image}" alt="문제 원문 이미지"><div>${q.question||''}</div>`;
+ }else{
+   $('qtext').textContent=q.question||'(지문 추출 확인 필요)';
+ }
  $('tagBox').innerHTML=(q.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('');
  $('choices').innerHTML='';q.choices.forEach((c,i)=>{let n=i+1,b=document.createElement('button');b.className='choice';b.textContent=`${n}. ${c||'(보기 추출 확인 필요)'}`;if(selected===n)b.classList.add('selected');if(checked){if(n===q.answer)b.classList.add('correct');if(selected===n&&n!==q.answer)b.classList.add('wrong')}b.onclick=()=>{selected=n;state.answers[q.id]=n;save();render()};$('choices').appendChild(b)});
  $('result').textContent='';$('explainBox').classList.toggle('hidden',!checked);if(checked){$('result').innerHTML=selected===q.answer?'⭕ 정답':`❌ 오답 · 정답 ${q.answer}번`;$('explanation').textContent=q.explanation;$('note').value=state.notes[q.id]||''}renderOMR()}
