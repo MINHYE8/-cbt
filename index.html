@@ -64,6 +64,18 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
       <button class="danger" onclick="startExam()">실전 CBT 60분</button><button class="good" onclick="showStats()">통계</button>
     </div>
   </div>
+
+  <div class="card">
+    <b>추천 범위</b>
+    <p class="small">문제가 많아져서 최근 기출/전체 기출을 나눠서 풀 수 있게 했어.</p>
+    <div class="grid">
+      <button onclick="start('recent3')">최근 3년</button>
+      <button onclick="start('since2020')">2020~2026</button>
+      <button onclick="start('old')">2016~2019</button>
+      <button onclick="start('all')">전체 1740문제</button>
+    </div>
+  </div>
+
   <div class="card"><b>과목별</b><br><br><div class="grid3">
     <button onclick="start('subject','컴퓨터 일반')">1과목<br>컴퓨터 일반</button>
     <button onclick="start('subject','스프레드시트 일반')">2과목<br>스프레드시트</button>
@@ -124,7 +136,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v2.2.7\n업데이트: Safari 캐시 제거')">CBT v2.2.7</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v3.0.0\n업데이트: 2016~2020 기출 추가')">CBT v3.0.0</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
 <script src="data.js"></script>
 <script>
@@ -138,7 +150,7 @@ function updateHome(){let done=Object.keys(state.answers).length,total=QUESTIONS
 function showHome(){clearInterval(tick);hideAll();updateHome();$('home').classList.remove('hidden')}
 function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
 function start(mode,arg){exam=false;clearInterval(tick);$('timer').textContent='';
- if(mode==='all')list=[...QUESTIONS]; if(mode==='random20')list=shuffle(QUESTIONS).slice(0,20); if(mode==='random40')list=shuffle(QUESTIONS).slice(0,40); if(mode==='random60')list=shuffle(QUESTIONS).slice(0,60);
+ if(mode==='all')list=[...QUESTIONS]; if(mode==='recent3')list=QUESTIONS.filter(q=>q.year>=2024); if(mode==='since2020')list=QUESTIONS.filter(q=>q.year>=2020); if(mode==='old')list=QUESTIONS.filter(q=>q.year>=2016&&q.year<=2019); if(mode==='random20')list=shuffle(QUESTIONS).slice(0,20); if(mode==='random40')list=shuffle(QUESTIONS).slice(0,40); if(mode==='random60')list=shuffle(QUESTIONS).slice(0,60);
  if(mode==='subject')list=QUESTIONS.filter(q=>q.subject===arg); if(mode==='round')list=QUESTIONS.filter(q=>q.round===arg); if(mode==='wrong')list=QUESTIONS.filter(q=>state.wrong[q.id]); if(mode==='fav')list=QUESTIONS.filter(q=>state.fav[q.id]); if(mode==='search')list=QUESTIONS.filter(q=>(q.question+' '+q.choices.join(' ')+' '+(q.tags||[]).join(' ')).toLowerCase().includes(arg.toLowerCase()));
  if(!list.length){alert('해당 문제가 없어.');return}idx=0;hideAll();$('quiz').classList.remove('hidden');render()}
 function doSearch(){let v=$('searchInput').value.trim();if(!v){alert('검색어 입력');return}start('search',v)}
