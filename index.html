@@ -57,6 +57,10 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
 .reportItem .small{margin:0 0 6px}
 textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);border-radius:14px;padding:10px;font:inherit;background:var(--card);color:var(--text);box-sizing:border-box;margin-top:8px}
 
+
+.reportTypeSelect{width:100%;margin-top:8px}
+.reportCountMini{font-size:12px;color:var(--muted);margin-top:6px}
+
 </style></head>
 <body>
 <div id="toast" class="toast"></div>
@@ -104,20 +108,36 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
   <div class="card"><b>회차별</b><br><br><select id="roundSelect"></select><br><br><button class="primary" onclick="start('round',$('roundSelect').value)">선택 회차 풀기</button></div>
   <div class="card"><b>검색 / 키워드별</b><p class="small">예: INDEX, 부분합, 공유 통합 문서, RAID, SQL</p><input id="searchInput" placeholder="검색어 입력"><br><br><div class="grid"><button onclick="doSearch()">검색 문제 풀기</button><button onclick="showTags()">자주 나오는 키워드</button></div></div>
   <div class="card warn">그림·표가 있는 일부 문제는 PDF 자동 추출 때문에 원본 배치와 다를 수 있어. 문제번호와 회차는 유지되어 있으니 헷갈리면 원본 PDF와 같이 보면 돼.</div>
+
+  <div class="card" id="reportHomeCard">
+    <b>🚩 오류 관리</b>
+    <p class="small">문제/선지가 깨진 문제를 신고하고, 나중에 한 번에 복사할 수 있어.</p>
+    <div class="stat" id="reportCountHome">0개</div>
+    <div class="small">신고된 문제</div><br>
+    <div class="grid">
+      <button class="reportBtn" onclick="showReports()">🚩 오류 모음</button>
+      <button onclick="copyReports()">오류 목록 복사</button>
+    </div>
+  </div>
+
 </section>
+
 
 
 <section id="reports" class="hidden">
   <div class="card">
     <h2>🚩 오류 모음</h2>
-    <p class="small">깨진 문제를 신고해두면 여기에서 모아서 볼 수 있어. 복사해서 보내면 해당 문제만 고칠 수 있어.</p>
+    <p class="small">공부 중 깨진 문제를 모아두는 곳. 아래 목록을 복사해서 보내면 그 문제만 골라서 수정할 수 있어.</p>
+    <div class="stat" id="reportCountPage">0개</div>
+    <div class="small">현재 신고된 문제</div><br>
     <div class="grid">
-      <button onclick="copyReports()">오류 목록 복사</button>
+      <button onclick="copyReports()">📋 오류 목록 복사</button>
       <button class="danger" onclick="clearReports()">전체 삭제</button>
     </div>
     <div id="reportList" class="reportList"></div>
   </div>
 </section>
+
 
 <section id="quiz" class="hidden">
   <div class="card">
@@ -169,9 +189,9 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v3.0.5\n업데이트: 오류 신고 현재문제 연결 수정')">CBT v3.0.5</div>
+<div class="versionBadge" onclick="alert('컴활 CBT v3.1.0\n업데이트: 오류 신고 센터')">CBT v3.1.0</div>
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
-<script src="data.js?v=305"></script>
+<script src="data.js?v=310"></script>
 <script>
 const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
@@ -179,8 +199,8 @@ let list=[],idx=0,selected=null,checked=false,exam=false,endAt=null,tick=null;
 function $(id){return document.getElementById(id)}function save(){localStorage.setItem(LS,JSON.stringify(state));updateHome()}
 function hideAll(){['home','quiz','score','stats','tags'].forEach(x=>$(x).classList.add('hidden'))}
 function applyTheme(){document.documentElement.classList.toggle('dark',!!state.dark)}function toggleDark(){state.dark=!state.dark;applyTheme();save()}
-function updateHome(){let done=Object.keys(state.answers).length,total=QUESTIONS.length;$('homeScore').textContent=done+' / '+total;$('homeBar').style.width=(done/total*100)+'%';$('topSub').textContent=`${QUESTIONS.length}문제 · ${new Set(QUESTIONS.map(q=>q.round)).size}회분`}
-function showHome(){clearInterval(tick);hideAll();updateHome();$('home').classList.remove('hidden')}
+function updateHome(){setTimeout(()=>{if(typeof updateReportUI==='function')updateReportUI()},0);let done=Object.keys(state.answers).length,total=QUESTIONS.length;$('homeScore').textContent=done+' / '+total;$('homeBar').style.width=(done/total*100)+'%';$('topSub').textContent=`${QUESTIONS.length}문제 · ${new Set(QUESTIONS.map(q=>q.round)).size}회분`}
+function showHome(){clearInterval(tick);hideAll();updateHome();updateReportUI&&updateReportUI();$('home').classList.remove('hidden')}
 function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
 
 function sortLatestFirst(arr){
@@ -225,7 +245,8 @@ if(window.caches){
   caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)));
 }}
 
-// ===== v3.0.4 stable error report =====
+
+// ===== v3.1.0 report center =====
 function toast(msg){
   const el=document.getElementById('toast');
   if(!el){ alert(msg); return; }
@@ -239,6 +260,7 @@ function reportStore(){
 }
 function saveReportStore(arr){
   localStorage.setItem('cbtReports',JSON.stringify(arr));
+  updateReportUI();
 }
 function getCurrentQuestionForReport(){
   try{
@@ -253,40 +275,55 @@ function isReportSaved(q){
   const key=reportKey(q);
   return !!reportStore().find(x=>x.key===key);
 }
-function updateReportButton(){
+function updateReportUI(){
+  const arr=reportStore();
+  const countText=arr.length+'개';
+  const home=document.getElementById('reportCountHome');
+  const page=document.getElementById('reportCountPage');
+  if(home)home.textContent=countText;
+  if(page)page.textContent=countText;
+
   const q=getCurrentQuestionForReport();
   const saved=q && isReportSaved(q);
-  document.querySelectorAll('.reportBtn,[data-report-btn="1"]').forEach(btn=>{
+  document.querySelectorAll('[data-report-btn="1"]').forEach(btn=>{
     btn.classList.toggle('done',!!saved);
     btn.textContent=saved?'✅ 신고됨':'🚩 오류 신고';
   });
 }
 function reportCurrent(){
   const q=getCurrentQuestionForReport();
-  if(!q){ toast('신고할 문제가 없어'); return; }
+  if(!q){ toast('현재 문제 연결 실패'); return; }
+
   const key=reportKey(q);
   let arr=reportStore();
   const existing=arr.find(x=>x.key===key);
+
   if(existing){
     arr=arr.filter(x=>x.key!==key);
     saveReportStore(arr);
     toast('신고 취소됨');
-    updateReportButton();
     return;
   }
+
+  const type=prompt(
+    '오류 종류를 입력해줘.\n예: 문제 깨짐 / 보기 깨짐 / 정답 오류 / 오타 / 기타',
+    '문제/선지 깨짐'
+  );
+  if(type===null)return;
+
   arr.push({
     key,
     id:q.id,
     round:q.round,
     subject:q.subject,
     no:q.no,
-    question:(q.question||'').slice(0,160),
-    memo:'문제/선지 깨짐',
+    question:(q.question||'').slice(0,180),
+    type:type||'문제/선지 깨짐',
+    memo:type||'문제/선지 깨짐',
     time:new Date().toLocaleString()
   });
   saveReportStore(arr);
-  toast(`오류 목록에 추가됨: ${q.round} ${q.no}번`);
-  updateReportButton();
+  toast(`신고 완료 (${arr.length}개)`);
 }
 function showReports(){
   document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
@@ -295,6 +332,7 @@ function showReports(){
   window.scrollTo(0,0);
 }
 function renderReports(){
+  updateReportUI();
   const box=document.getElementById('reportList');
   if(!box)return;
   const arr=reportStore();
@@ -304,13 +342,21 @@ function renderReports(){
   }
   box.innerHTML=arr.map((x,i)=>`
     <div class="reportItem">
-      <b>${i+1}. ${x.round} · ${x.subject} · ${x.no}번</b>
+      <b>${i+1}. ${escapeHtml(x.round)} · ${escapeHtml(x.subject)} · ${x.no}번</b>
       <p class="small">${escapeHtml(x.question||'')}</p>
-      <textarea class="reportMemo" onchange="updateReportMemo('${x.key}',this.value)">${escapeHtml(x.memo||'문제/선지 깨짐')}</textarea>
+      <select class="reportTypeSelect" onchange="updateReportType('${x.key}',this.value)">
+        ${['문제/선지 깨짐','문제 깨짐','보기 깨짐','정답 오류','오타','기타'].map(v=>`<option ${((x.type||x.memo)===v)?'selected':''}>${v}</option>`).join('')}
+      </select>
+      <textarea class="reportMemo" onchange="updateReportMemo('${x.key}',this.value)">${escapeHtml(x.memo||x.type||'문제/선지 깨짐')}</textarea>
       <p class="small">${escapeHtml(x.time||'')}</p>
       <button class="ghost" onclick="removeReport('${x.key}')">삭제</button>
     </div>
   `).join('');
+}
+function updateReportType(key,val){
+  const arr=reportStore();
+  const item=arr.find(x=>x.key===key);
+  if(item){ item.type=val; item.memo=val; saveReportStore(arr); renderReports(); toast('종류 저장됨'); }
 }
 function updateReportMemo(key,val){
   const arr=reportStore();
@@ -320,20 +366,20 @@ function updateReportMemo(key,val){
 function removeReport(key){
   saveReportStore(reportStore().filter(x=>x.key!==key));
   renderReports();
-  updateReportButton();
+  toast('삭제됨');
 }
 function clearReports(){
   if(confirm('오류 모음을 전부 삭제할까?')){
     localStorage.removeItem('cbtReports');
     renderReports();
-    updateReportButton();
+    updateReportUI();
     toast('오류 모음 삭제됨');
   }
 }
 function reportsText(){
   const arr=reportStore();
   if(!arr.length)return '오류 신고 없음';
-  return arr.map((x,i)=>`${i+1}. ${x.round} / ${x.subject} / ${x.no}번 - ${x.memo||'문제/선지 깨짐'}`).join('\n');
+  return arr.map((x,i)=>`${i+1}. ${x.round} / ${x.subject} / ${x.no}번 / ${x.type||x.memo||'문제/선지 깨짐'}`).join('\n');
 }
 function copyReports(){
   const text=reportsText();
@@ -346,7 +392,7 @@ function copyReports(){
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
-setInterval(updateReportButton,700);
+setInterval(updateReportUI,700);
 
 init();
 </script>
