@@ -20,6 +20,9 @@ select,input{width:100%;border:1px solid var(--line);border-radius:14px;padding:
 .question{font-size:18px;line-height:1.55;font-weight:850;white-space:pre-wrap;word-break:keep-all}.choice{width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);color:var(--ink);margin:8px 0;font-weight:700;line-height:1.45;white-space:pre-wrap}
 .choice.selected{border-color:var(--blue);background:var(--blue2)}.choice.correct{border-color:var(--green);background:var(--green2)}.choice.wrong{border-color:var(--red);background:var(--red2)}
 hr{border:0;border-top:1px solid var(--line);margin:13px 0}.warn{background:var(--yellow);border:1px solid #fed7aa;color:#9a3412;border-radius:14px;padding:11px;font-size:13px;line-height:1.45}.dark .warn{color:#fed7aa}
+.actionbar{position:sticky;bottom:72px;z-index:25;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:20px;padding:10px;margin:12px 0;box-shadow:var(--shadow)}
+.actionbar .row{justify-content:space-between}.actionbar button{flex:1;min-width:0}
+.omrWrap.collapsed #omr{display:none}.omrToggle{width:100%;margin-bottom:8px}
 footer{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;gap:6px;padding:8px env(safe-area-inset-right) calc(8px + env(safe-area-inset-bottom)) env(safe-area-inset-left);z-index:30}
 footer button{min-width:58px;padding:10px 8px;font-size:12px}.tag{font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--card) 70%,var(--line));padding:5px 8px;border-radius:999px;display:inline-block;margin:2px}
 .omr{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}.bubble{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;background:color-mix(in srgb,var(--card) 60%,var(--line));color:var(--muted)}.bubble.done{background:var(--blue);color:white}.bubble.wrong{background:var(--red);color:white}.bubble.current{outline:3px solid var(--green)}
@@ -64,8 +67,18 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
       <textarea id="note" placeholder="내 해설·암기 포인트"></textarea><br><br><button class="ghost" onclick="saveNote()">메모 저장</button>
     </div>
   </div>
-  <div class="card"><b>OMR</b><br><br><div class="omr" id="omr"></div></div>
-  <div class="row"><button class="ghost" onclick="prevQ()">이전</button><button class="primary" onclick="submitQ()">정답 확인</button><button class="ghost" onclick="nextQ()">다음</button><button class="danger" onclick="finish()">채점</button></div>
+  <div class="actionbar">
+    <div class="row">
+      <button class="ghost" onclick="prevQ()">이전</button>
+      <button class="primary" onclick="submitQ()">정답 확인</button>
+      <button class="ghost" onclick="nextQ()">다음</button>
+      <button class="danger" onclick="finish()">채점</button>
+    </div>
+  </div>
+  <div class="card omrWrap collapsed" id="omrWrap">
+    <button class="ghost omrToggle" onclick="toggleOMR()">OMR 펼치기/접기</button>
+    <div class="omr" id="omr"></div>
+  </div>
 </section>
 
 <section id="score" class="hidden"><div class="card"><div class="stat" id="scoreMain"></div><div class="small" id="scoreSub"></div></div><div class="card" id="subjectScore"></div><div class="grid"><button class="primary" onclick="showHome()">홈</button><button onclick="start('wrong')">오답 다시 풀기</button></div></section>
@@ -75,7 +88,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid
 <footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
 <script src="data.js"></script>
 <script>
-const LS='comhwal-cbt-v2';let state=JSON.parse(localStorage.getItem(LS)||'{}');
+const LS='comhwal-cbt-v21';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.dark=state.dark||false;
 let list=[],idx=0,selected=null,checked=false,exam=false,endAt=null,tick=null;
 function $(id){return document.getElementById(id)}function save(){localStorage.setItem(LS,JSON.stringify(state));updateHome()}
@@ -96,6 +109,7 @@ function render(){let q=list[idx];selected=state.answers[q.id]||null;checked=!ex
  $('choices').innerHTML='';q.choices.forEach((c,i)=>{let n=i+1,b=document.createElement('button');b.className='choice';b.textContent=`${n}. ${c||'(보기 추출 확인 필요)'}`;if(selected===n)b.classList.add('selected');if(checked){if(n===q.answer)b.classList.add('correct');if(selected===n&&n!==q.answer)b.classList.add('wrong')}b.onclick=()=>{selected=n;state.answers[q.id]=n;save();render()};$('choices').appendChild(b)});
  $('result').textContent='';$('explainBox').classList.toggle('hidden',!checked);if(checked){$('result').innerHTML=selected===q.answer?'⭕ 정답':`❌ 오답 · 정답 ${q.answer}번`;$('explanation').textContent=q.explanation;$('note').value=state.notes[q.id]||''}renderOMR()}
 function renderOMR(){let h='';list.forEach((q,i)=>{let cls='bubble '+(state.answers[q.id]?'done ':'')+(i===idx?'current ':'')+(!exam&&state.answers[q.id]&&state.answers[q.id]!==q.answer?'wrong ':'');h+=`<div class="${cls}" onclick="idx=${i};render()">${i+1}</div>`});$('omr').innerHTML=h}
+function toggleOMR(){$('omrWrap').classList.toggle('collapsed')}
 function submitQ(){let q=list[idx];if(!selected){alert('보기를 먼저 선택해.');return}checked=true;if(selected!==q.answer)state.wrong[q.id]=true;else delete state.wrong[q.id];save();render()}
 function nextQ(){if(idx<list.length-1){idx++;render()}}function prevQ(){if(idx>0){idx--;render()}}
 function toggleFav(){let q=list[idx];state.fav[q.id]?delete state.fav[q.id]:state.fav[q.id]=true;save();render()}function markHard(){let q=list[idx];state.hard[q.id]=true;save();alert('어려움 표시 완료')}
