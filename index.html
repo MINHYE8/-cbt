@@ -72,6 +72,13 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 
 .skipBtn{background:#fff7ed!important;color:#9a3412!important;border:1px solid #fed7aa!important;font-weight:900!important}
 .skipPill{display:inline-flex;padding:6px 9px;border-radius:999px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-size:12px;font-weight:900;margin:2px}
+
+.answerActionBar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0 10px}
+.answerActionBar button{min-height:48px}
+@media(max-width:430px){
+  .answerActionBar button{font-size:15px;padding:12px 8px}
+}
+.skipBtn{background:#fff7ed!important;color:#9a3412!important;border:1px solid #fed7aa!important;font-weight:900!important}
 </style></head>
 <body>
 <header><h1>컴활 1급 필기 CBT</h1><div class="sub" id="topSub"></div></header>
@@ -199,9 +206,9 @@ textarea.reportMemo{width:100%;min-height:72px;border:1px solid var(--line);bord
 <section id="stats" class="hidden"><div class="card"><b>학습 통계</b><div id="statsBox"></div></div><div class="card"><b>약점 키워드</b><div id="weakTags"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 <section id="tags" class="hidden"><div class="card"><b>자주 나오는 키워드</b><p class="small">누르면 해당 키워드 문제만 풀 수 있어.</p><div id="tagList"></div></div><button class="primary" onclick="showHome()">홈</button></section>
 </main>
-<div class="versionBadge" onclick="alert('컴활 CBT v4.0.0\n업데이트: 외부 WebP 이미지 구조')">CBT v4.0.0</div>
-<footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button></footer>
-<script src="data.js?v=400"></script>
+<div class="versionBadge" onclick="alert('컴활 CBT v4.0.1\n업데이트: 해설 위 버튼/전체 랜덤')">CBT v4.0.1</div>
+<footer><button onclick="showHome()">홈</button><button onclick="start('subject','컴퓨터 일반')">1과목</button><button onclick="start('subject','스프레드시트 일반')">2과목</button><button onclick="start('subject','데이터베이스 일반')">3과목</button><button onclick="start('wrong')">오답</button><button onclick="start('randomAll')">전체랜덤</button></footer>
+<script src="data.js?v=401"></script>
 <script>
 const LS='comhwal-cbt-v2263';let state=JSON.parse(localStorage.getItem(LS)||'{}');
 state.answers=state.answers||{};state.wrong=state.wrong||{};state.fav=state.fav||{};state.notes=state.notes||{};state.hard=state.hard||{};state.skip=state.skip||{};state.dark=state.dark||false;
